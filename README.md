@@ -19,8 +19,6 @@ This project sets up a security camera system using a Raspberry Pi, AWS S3, and 
 ## Demo
 Link to demo: [Security Camera System Demo](https://youtu.be/YV6XeBje7cA)
 
-[![Security Camera System Demo](https://img.youtube.com/vi/YV6XeBje7cA/0.jpg)](https://youtu.be/YV6XeBje7cA)
-
 ## Setup
 
 1. **Install Dependencies**
@@ -54,7 +52,7 @@ Link to demo: [Security Camera System Demo](https://youtu.be/YV6XeBje7cA)
 ## Usage
 
 - The system initializes the camera and waits for body detection.
-- When a body is detected, video recording starts and continues until no bodies are detected for a specified interval (default 7 seconds).
+- When a body is detected, video recording starts and continues until no bodies are detected. Additionally it has a 7-second buffer before stopping the recording incase the body moves out of the frame.
 - If the `--local` flag is not set, recorded videos are uploaded to the specified S3 bucket and deleted locally after a successful upload.
 
 ## File Description
