@@ -15,6 +15,12 @@ This project sets up a security camera system using a Raspberry Pi, AWS S3, and 
 - AWS S3 account and relevant credentials.
 - Haar cascade model file for body detection.
 
+
+## Demo
+Link to demo: [Security Camera System Demo](https://youtu.be/YV6XeBje7cA)
+
+[![Security Camera System Demo](https://img.youtube.com/vi/YV6XeBje7cA/0.jpg)](https://youtu.be/YV6XeBje7cA)
+
 ## Setup
 
 1. **Install Dependencies**
@@ -56,9 +62,6 @@ This project sets up a security camera system using a Raspberry Pi, AWS S3, and 
 - **main.py**: The main script that sets up the camera, detects bodies, and handles video recording and uploading.
 - **.env**: Environment file storing AWS credentials and endpoint URL.
 
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgements
 
