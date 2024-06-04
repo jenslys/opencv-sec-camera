@@ -1,7 +1,9 @@
 import argparse
+import http.client
 import io
 import os
 import time
+import urllib
 
 import boto3
 import cv2
@@ -15,9 +17,13 @@ from picamera2.outputs import FfmpegOutput
 # * Load environment variables
 load_dotenv()
 os.environ["LIBCAMERA_LOG_LEVELS"] = "4"
-endpointUrl = os.getenv("ENDPOINT_URL")
-accessKey = os.getenv("ACCESS_KEY")
-secretAccessKey = os.getenv("SECRET_ACCESS_KEY")
+endpointUrl = os.getenv("R2_ENDPOINT_URL")
+accessKey = os.getenv("R2_ACCESS_KEY")
+secretAccessKey = os.getenv("R2_SECRET_ACCESS_KEY")
+publicBucket = os.getenv("R2_PUBLIC_URL")
+appToken = os.getenv("PUSHOVER_APP_TOKEN")
+userKey = os.getenv("PUSHOVER_USER_KEY")
+
 
 # * Constants
 recordingInterval = 7
@@ -48,7 +54,7 @@ bodyDetector = cv2.CascadeClassifier(cascadePath)
 
 def detectBodies():
     # * Captures an image from the camera, converts it to grayscale, and detects bodies.
-    # * Returns True if any bodies are detected, otherwise False.
+    # * @return True if any bodies are detected, otherwise False.
     im = (
         picam2.capture_array()
     )  # ? Capture the next camera image from the stream named as its first argument
@@ -57,6 +63,38 @@ def detectBodies():
     )  # ? Convert the captured image to grayscale
     bodies = bodyDetector.detectMultiScale(grey, 1.1, 5)  # * Detect bodies in the image
     return len(bodies) > 0  # * Return True if any bodies are detected, otherwise False
+
+
+def send_notification(video_url):
+
+    # * Sends a notification with a link to the video.
+    # * @param video_url The URL of the video to send in the notification.
+    # * @return The response from the Pushover API.
+
+    logger.info("Sending notification...")
+
+    try:
+        conn = http.client.HTTPSConnection("api.pushover.net:443")
+        conn.request(
+            "POST",
+            "/1/messages.json",
+            urllib.parse.urlencode(
+                {
+                    "token": appToken,
+                    "user": userKey,
+                    "title": "Person detected!",
+                    "message": "A person has been detected in the frame! Here is the link to the video:",
+                    "url": video_url,
+                }
+            ),
+            {"Content-type": "application/x-www-form-urlencoded"},
+        )
+        response = conn.getresponse()
+        logger.info("Notification sent")
+        return response
+    except Exception as e:
+        logger.error(f"Error sending notification: {str(e)}")
+        return None
 
 
 def main():
@@ -86,6 +124,7 @@ def main():
                 timestamp = time.strftime("%Y%m%d_%H%M%S")
                 outputFilename = f"output_{timestamp}.mp4"
                 output = FfmpegOutput(outputFilename)
+                videoUrl = f"{publicBucket}/{outputFilename}"
 
                 # * Start recording if a body is detected and not already recording
                 picam2.start_recording(encoder, output, quality=Quality.LOW)
@@ -113,6 +152,9 @@ def main():
                             io.BytesIO(fileContent), "detection", outputFilename
                         )
                         logger.info(f"Uploaded {outputFilename} to S3 successfully")
+
+                        # * Send notification
+                        send_notification(videoUrl)
 
                         # * Delete the local file after uploading
                         os.remove(outputFilename)
